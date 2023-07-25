@@ -16,7 +16,6 @@ class WCST_Env():
     
     def __init__(self,
                #N=2,
-               episode_steps=32,
                #stimuli_choices=list('ABCDEF'),
                seed=1,
                ):
@@ -28,7 +27,8 @@ class WCST_Env():
         seed
         """
 
-        self.episode_steps = episode_steps
+        self.episode_steps = 36  #36 cards per episode
+        self._current_step = 0  #Episode counter
         self._reset_next_step = True
         self._action_history = []
 
@@ -123,7 +123,7 @@ class WCST_Env():
 
         agent_action = WCST_Env.ACTIONS[action]
 
-        #Produce reward
+        #Compute reward
         step_reward = self.external_feedback(agent_action)
         print("Reward:", step_reward)
 
@@ -163,7 +163,7 @@ class WCST_Env():
         self._current_step += 1
 
         # Check for termination.
-        if self.nbTS >= 6:
+        if self.nbTS >= 6 or self._current_step == self.episode_steps:
             self._reset_next_step = True
             #return dm_env.termination(reward=self._episode_return(), observation=self._observation())
             print("Return last observation and terminate")
@@ -174,7 +174,7 @@ class WCST_Env():
             #return dm_env.transition(reward=step_reward, observation=self._observation())
             #Comment this one in notebook
             observation=self._observation()
-            print("Return observation")
+            print("Step: ", self._current_step, "Return observation")
             pass
         
     def observation_spec(self):
@@ -224,10 +224,11 @@ timestep = env.reset()
 
 import random
 
-## FIXME: After 36 cards it stalls, 
-# according to the rule it should end the game internally
+## FIXME: This stalls after 36 cards, which is the limit per game or episode
+## In the RL framework you should iterate as it is indicated in the acme loop.
 
 for i in range(0,300):
+    
     print("Step ", i)
     action = random.randint(0,2)
     env.step(action)
