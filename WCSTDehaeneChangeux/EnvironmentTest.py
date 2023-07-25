@@ -14,21 +14,10 @@ import numpy as np
 class WCST_Env():
     ACTIONS = [0, 1, 2, 3]
     
-    def __init__(self,
-               #N=2,
-               #stimuli_choices=list('ABCDEF'),
-               seed=1,
-               ):
-        """
-        Args:
-        episode_steps
-        stimuli_choices: What are the posible actions? 
-        human_data
-        seed
-        """
+    def __init__(self,seed=1):
 
-        self.episode_steps = 36  #36 cards per episode
-        self._current_step = 0  #Episode counter
+        self.episode_steps = 36  #36 cards or steps per episode
+        self._current_step = 0  #Current episode step counter
         self._reset_next_step = True
         self._action_history = []
 
@@ -166,7 +155,7 @@ class WCST_Env():
         if self.nbTS >= 6 or self._current_step == self.episode_steps:
             self._reset_next_step = True
             #return dm_env.termination(reward=self._episode_return(), observation=self._observation())
-            print("Return last observation and terminate")
+            print("Return last observation and terminate, NbTS=", self.nbTS)
             pass
         else:
             #Send reward to agent and a new observation
@@ -226,8 +215,7 @@ import random
 
 ## FIXME: This stalls after 36 cards, which is the limit per game or episode
 ## In the RL framework you should iterate as it is indicated in the acme loop.
-
-for i in range(0,300):
+for i in range(0,100):
     
     print("Step ", i)
     action = random.randint(0,2)
