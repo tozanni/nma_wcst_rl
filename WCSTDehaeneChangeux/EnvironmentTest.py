@@ -39,7 +39,11 @@ class WCST_Env():
         r = 3  #rules number, we have 3 rules
 
         self.nbTS = 0
+        self.nb_win = 0
         self.t_criterion = 0
+        self.t_err = 0
+        self.criterions = []
+
         self.winstreak = 0
         self.m_percep = WCST.perception(self.nb_dim, self.nb_templates, self.nb_features)
         self.reasoning_list = []
@@ -78,6 +82,15 @@ class WCST_Env():
     def _episode_return(self):
       return 0.0
 
+    def rule_switching(self, rule):
+        """
+        Serially changing the rules : color - form - number.
+        """
+        if rule!=2:
+            rule = rule+1
+        else:
+            rule = 0
+        return rule
 
     def external_feedback(self, action):
         """
@@ -87,8 +100,8 @@ class WCST_Env():
         reference_cards = self.m_percep
         right_action_i = 0
 
-        print("Determine reward for rule:", self.rule, "and card: ")
-        print(response_card)
+        #print("Determine reward for rule:", self.rule, "and card: ")
+        #print(response_card)
 
         for i in range(0, self.nb_templates):
 
@@ -110,14 +123,41 @@ class WCST_Env():
 
         agent_action = WCST_Env.ACTIONS[action]
 
-        # Expected action
-        expected_action = 3
-
-        # Produce reward
-        #step_reward = 0. if (agent_action == expected_action) else -1.
-
+        #Produce reward
         step_reward = self.external_feedback(agent_action)
         print("Reward:", step_reward)
+
+        ##Winstreak count
+        if step_reward == 0:
+            self.t_err = 0
+            self.nb_win += 1
+            self.winstreak += 1
+            #ptrial.append(1)
+            #ntrial.append(0)
+
+        if step_reward == 1:
+            self.t_criterion += 1
+            self.t_err += 1
+
+            #FIXME: In the original code winstreak is reset
+            #after a positive reward. This doesn't look right.
+
+            #self.winstreak = 0
+            #ptrial.append(0)
+            #ntrial.append(1)
+
+        # Criterion test
+        # After 3 wins, then change the rule
+        if self.winstreak==3:
+            self.rule = self.rule_switching(self.rule)
+            self.criterions.append(self.t_criterion)
+            #Reset some variables and increment nbTS
+            self.t_criterion = 0
+            self.winstreak = 0
+            self.nbTS +=1
+            print("winstreak=3, New rule is ", self.rule, "NbTS=", self.nbTS)
+        else:
+            print("Winstreak=", self.winstreak)
 
         self._action_history.append(agent_action)
         self._current_step += 1
@@ -129,7 +169,10 @@ class WCST_Env():
             print("Return last observation and terminate")
             pass
         else:
+            #Send reward to agent and a new observation
+            #Uncomment in notebook
             #return dm_env.transition(reward=step_reward, observation=self._observation())
+            #Comment this one in notebook
             observation=self._observation()
             print("Return observation")
             pass
@@ -153,20 +196,8 @@ class WCST_Env():
     def _observation(self):
         # agent observes only the current trial
 
-        # Criterion test (Environment)
-        # Rule change logic based on current winstreak
-        if self.winstreak==3:
-            self.rule = WCST.rule_switching(self.rule)
-            self.criterions.append(self.t_criterion)
-            
-            #Reset some variables and increment nbTS
-            self.t_criterion = 0
-            self.winstreak = 0
-            self.nbTS +=1
-
         #INPUT new card, (Environment)
         np_data, card = self.new_card()
-        self.last_card = np_data  # required on external_feedback_function
 
         #print("New card is np_data", np_data)
         #print("New card is v_data", card)
@@ -188,15 +219,20 @@ class WCST_Env():
 ## Test run
 env = WCST_Env()
 
+# First observation
 timestep = env.reset()
 
-# Make the first observation.
-#agent.observe_first(timestep)
+import random
 
-action = 1
+## FIXME: After 36 cards it stalls, 
+# according to the rule it should end the game internally
 
-env.step(action)
-
+for i in range(0,300):
+    print("Step ", i)
+    action = random.randint(0,2)
+    env.step(action)
+    
+print("END")
 
 
 
