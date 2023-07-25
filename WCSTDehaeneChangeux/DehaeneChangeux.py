@@ -557,12 +557,12 @@ def WCST_test(nb_test, path):
             action = np.argmax(output_activity)
             reward = external_feedback(action, np_data, m_percep, rule)
 
-            #DATA HISTORY
+            #DATA HISTORY (Statistics)
             rewards.append(reward)
             prev_reward = reward
             true_rewards.append(reward)
 
-            #PERSEVERATION 
+            #PERSEVERATION (Statistics)
             prev_chosen_rules.append(np.argmax(rules_activity))
             chosen_rule = np.argmax(rules_activity)
             if t_err>=1 and reward==1:
@@ -570,6 +570,7 @@ def WCST_test(nb_test, path):
                 if prev_rule == chosen_rule:
                     perseveration += 1
 
+            # DEBUG
             print("\nACTION " + str(t)+ ": " + str(action)+ "  REWARD: " + str(reward))
             
             if reward == 0:
@@ -641,8 +642,7 @@ def WCST_test(nb_test, path):
 
     #Statistics
     if t>=1:
-
-
+        
         err = 0
         for i in range(0, len(rewards)):
             if rewards[i] == 1:
